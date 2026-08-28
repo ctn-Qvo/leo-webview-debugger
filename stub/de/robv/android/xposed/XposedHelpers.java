@@ -1,0 +1,13 @@
+package de.robv.android.xposed;
+
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
+
+public final class XposedHelpers {
+    public static XC_MethodHook.Unhook findAndHookMethod(Class<?> clazz, String methodName, Object... parameterTypesAndCallback) {
+        return null;
+    }
+    public static XC_MethodHook.Unhook findAndHookMethod(String className, ClassLoader classLoader, String methodName, Object... parameterTypesAndCallback) {
+        return null;
+    }
+}
