@@ -2,5 +2,7 @@ __pycache__/
 *.pyc
 *.log
 .DS_Store
-.vscode/
-.idea/
+*.apk
+*.dex
+*.jar
+build/
