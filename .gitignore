@@ -8,3 +8,6 @@ __pycache__/
 build/
 idsig
 stub_classes/
+android-build-tools/
+unsigned.apk
+aligned.apk

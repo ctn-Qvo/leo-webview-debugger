@@ -9,14 +9,20 @@ set -e
 cd "$(dirname "$0")"
 
 JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 17)}"
-BT="${BT:-$HOME/android-build-tools/bt-r34}"
+BT="${BT:-$(pwd)/android-build-tools/bt-r34}"
 D8_JAR="${D8_JAR:-$BT/lib/d8.jar}"
 AAPT2="${AAPT2:-$BT/aapt2}"
 ZIPALIGN="${ZIPALIGN:-$BT/zipalign}"
 APKSIGNER_JAR="${APKSIGNER_JAR:-$BT/lib/apksigner.jar}"
-ANDROID_JAR="${ANDROID_JAR:-$HOME/android-build-tools/android-34/android.jar}"
-KS="${KS:-$HOME/android-build-tools/keys/leo.keystore}"
+ANDROID_JAR="${ANDROID_JAR:-$(pwd)/android-build-tools/android-34/android.jar}"
+KS="${KS:-$(pwd)/android-build-tools/keys/leo.keystore}"
 KS_PASS="${KS_PASS:-leo123456}"
+
+if [ ! -x "$AAPT2" ]; then
+  echo "错误: 未找到构建工具 $AAPT2" >&2
+  echo "请按 AGENTS.md 第5节下载 build-tools r34 + platform-34, 解压到 ./android-build-tools/" >&2
+  exit 1
+fi
 
 rm -rf build classes stub_classes *.jar *.dex
 mkdir -p build/assets build/classes
