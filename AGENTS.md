@@ -84,16 +84,18 @@ public class LeoDebugger implements IXposedHookLoadPackage {
 
 ## 5. 构建 (build.sh)
 
-### 依赖 (默认指向 ~/android-build-tools/, 可用环境变量覆盖)
-- JDK 17 (实测 Zulu 17: /Library/Java/JavaVirtualMachines/zulu-17.jdk)
-- build-tools r34 (含 d8/aapt2/zipalign/apksigner): ~/android-build-tools/bt-r34/
-- android.jar (API 34): ~/android-build-tools/android-34/android.jar
-- 签名 keystore: ~/android-build-tools/keys/leo.keystore (storepass/keypass: leo123456)
+### 依赖 (工具链在仓库目录 android-build-tools/ 内, 已 gitignore 不入库; 可用环境变量覆盖)
+- JDK 17 (实测 Zulu 17: /Library/Java/JavaVirtualMachines/zulu-17.jdk, 系统安装, 不随仓库分发)
+- build-tools r34 (含 d8/aapt2/zipalign/apksigner): android-build-tools/bt-r34/
+- android.jar (API 34): android-build-tools/android-34/android.jar
+- 签名 keystore: android-build-tools/keys/leo.keystore (storepass/keypass: leo123456)
 
-下载方式 (build-tools 解压后目录名 android-14 需改名为 bt-r34):
+新机器初始化 (build-tools 解压后目录名 android-14 需改名为 bt-r34):
 ```bash
+cd leo-webview-debugger && mkdir -p android-build-tools && cd android-build-tools
 curl -L -o bt34.zip https://dl.google.com/android/repository/build-tools_r34-macosx.zip
 curl -L -o platform34.zip https://dl.google.com/android/repository/platform-34-ext7_r03.zip
+unzip bt34.zip && unzip platform34.zip && mv android-14 bt-r34 && rm *.zip
 ```
 
 ### 构建流程 (build.sh 内)
