@@ -84,13 +84,17 @@ public class LeoDebugger implements IXposedHookLoadPackage {
 
 ## 5. 构建 (build.sh)
 
-### 依赖
-- JDK 17+ (实测 Zulu 17: /Library/Java/JavaVirtualMachines/zulu-17.jdk)
-- d8 (Android build-tools: /tmp/bt_mac/android-14/lib/d8.jar)
-- aapt2 (macOS build-tools: /tmp/bt_mac/android-14/aapt2)
-- apksigner (同 build-tools)
-- android.jar (API 34: /tmp/android_34.jar)
-- 签名 keystore (keytool 生成)
+### 依赖 (默认指向 ~/android-build-tools/, 可用环境变量覆盖)
+- JDK 17 (实测 Zulu 17: /Library/Java/JavaVirtualMachines/zulu-17.jdk)
+- build-tools r34 (含 d8/aapt2/zipalign/apksigner): ~/android-build-tools/bt-r34/
+- android.jar (API 34): ~/android-build-tools/android-34/android.jar
+- 签名 keystore: ~/android-build-tools/keys/leo.keystore (storepass/keypass: leo123456)
+
+下载方式 (build-tools 解压后目录名 android-14 需改名为 bt-r34):
+```bash
+curl -L -o bt34.zip https://dl.google.com/android/repository/build-tools_r34-macosx.zip
+curl -L -o platform34.zip https://dl.google.com/android/repository/platform-34-ext7_r03.zip
+```
 
 ### 构建流程 (build.sh 内)
 ```
@@ -98,14 +102,15 @@ public class LeoDebugger implements IXposedHookLoadPackage {
 2. javac 编译 LeoDebugger.java (-cp stub.jar, 只输出模块类)
 3. d8 转 dex (--min-api 24)
 4. aapt2 link 编译 manifest (--min-sdk-version 24 --target-sdk-version 34)
-5. 组装 APK: manifest + resources.arsc + classes.dex + assets/xposed_init
-6. apksigner 签名
+5. 组装 APK: resources.arsc 用 zip -0 STORED 存入 (未压缩), 其余条目 zip -9
+6. zipalign -f 4 对齐 (Android 11+ 要求 arsc 未压缩且 4 字节对齐)
+7. apksigner 签名 (v2/v3, 不破坏 zipalign; 勿用 jarsigner)
+8. zipalign -c 校验
 ```
 
 ### 环境变量覆盖 (build.sh 支持)
 ```bash
-JAVA_HOME=/path/to/jdk D8_JAR=/path/d8.jar AAPT2=/path/aapt2 \
-APKSIGNER_JAR=/path/apksigner.jar ANDROID_JAR=/path/android.jar \
+JAVA_HOME=/path/to/jdk BT=/path/bt-r34 ANDROID_JAR=/path/android.jar \
 KS=/path/keystore KS_PASS=pass bash build.sh
 ```
 
@@ -134,15 +139,15 @@ KS=/path/keystore KS_PASS=pass bash build.sh
 | d8 崩溃 (NPE in graph.u2) | 匿名内部类 | 用具名静态类 |
 | 调试端口不出现 | hook 未生效 / 模块未加载 | 检查 lspd 日志; 确认作用域勾选 |
 | err-activity 日志 | attachBaseContext hook 失败 | 用 Activity.onCreate 代替 |
-| Android 11+ 安装失败 | resources.arsc 对齐问题 (已知) | 待修复: 需 zipalign 或手动 4 字节对齐 |
 
 ---
 
 ## 8. 已知限制
 
-- **Android 11+ 安装兼容性**: resources.arsc 未做 4 字节对齐, 部分设备安装可能失败 (当前手机实测可装)
 - 模块只做"开调试", 不做任何答题逻辑 (答题在主仓库)
 - 前端发版不影响本模块 (hook 的是 Android API, 不是页面 JS)
+- resources.arsc 对齐问题已在 build.sh 修复 (zip -0 STORED + zipalign -f 4), Android 11+ 可安装
+- keystore 于 2026-08-31 重新生成 (旧版丢失), 新旧 APK 签名不同, 覆盖安装需先卸载旧版
 
 ---
 
