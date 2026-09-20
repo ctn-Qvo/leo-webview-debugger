@@ -2,7 +2,7 @@
 
 # 🐞 Leo WebView Debugger
 
-**An LSPosed/Xposed module that force-enables WebView remote debugging in Xiaoyuan Kousuan (com.fenbi.android.leo).**
+**一个 LSPosed/Xposed 模块，强制开启小猿口算（com.fenbi.android.leo）的 WebView 远程调试。**
 
 [![leo-webview-debugger](https://img.shields.io/badge/leo-webview-debugger-LWD-orange.svg)](https://github.com/functy23/leo-webview-debugger)
 [![Java](https://img.shields.io/badge/Java-8%2B-red.svg?logo=openjdk&logoColor=white)](https://openjdk.org/)
@@ -19,34 +19,34 @@
 
 [Issues](https://github.com/functy23/leo-webview-debugger/issues) • [AGENTS.md](AGENTS.md) • [Releases](https://github.com/functy23/leo-webview-debugger/releases)
 
-**English** | [简体中文](doc/README_zh-CN.md)
+[English](../README.md) | **简体中文**
 </div>
 
 ---
 
-## Overview
+## 概览
 
-Force-enables WebView remote debugging in Xiaoyuan Kousuan (小猿口算, `com.fenbi.android.leo`) — an LSPosed/Xposed module.
+强制开启小猿口算 (`com.fenbi.android.leo`) WebView 远程调试的 LSPosed/Xposed 模块。
 
-> For learning WebView debugging and Xposed module development only. Use it together with leo-oral-pk-automator.
+> 仅供学习 WebView 调试与 Xposed 模块开发。配合 leo-oral-pk-automator 使用。
 
-## Usage
+## 配合使用
 
-It must be used together with https://github.com/functy23/leo-oral-pk-automator:
+必须与 https://github.com/functy23/leo-oral-pk-automator 配合：
 
-1. Download the prebuilt APK from **Releases** (`leo_debugger_v1.0.apk`)
-2. After installing, enable the module in LSPosed and check `com.fenbi.android.leo` in its scope
-3. Run `pk_auto.py` from the main repository
+1. 从 **Releases** 下载预构建 APK (`leo_debugger_v1.0.apk`)
+2. 安装后 LSPosed 启用模块，作用域勾选 `com.fenbi.android.leo`
+3. 运行主仓库的 `pk_auto.py`
 
-## Source Layout
+## 源码结构
 
-- `src/com/leo/debugger/LeoDebugger.java` — main module logic
-- `stub/` — API stubs used at compile time
-- `assets/xposed_init` — entry point declaration
-- `AndroidManifest.xml` — module metadata
-- `build.sh` — build script (requires JDK + d8 + aapt2 + apksigner)
+- `src/com/leo/debugger/LeoDebugger.java` — 模块主逻辑
+- `stub/` — 编译用 API 桩
+- `assets/xposed_init` — 入口声明
+- `AndroidManifest.xml` — 模块元数据
+- `build.sh` — 构建脚本 (需要 JDK + d8 + aapt2 + apksigner)
 
-## Build
+## 构建
 
 ```bash
 bash build.sh
