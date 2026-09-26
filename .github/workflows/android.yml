@@ -12,7 +12,6 @@ permissions:
 
 env:
   APK_NAME: 'leo_debugger'
-  BT_VERSION: '34.0.0'
   BUILD_TOOLS_URL: 'https://dl.google.com/android/repository/build-tools_r34-linux.zip'
   PLATFORM_URL: 'https://dl.google.com/android/repository/platform-34-ext7_r03.zip'
 
@@ -34,6 +33,7 @@ jobs:
 
       - name: 下载并准备构建工具
         run: |
+          set -e
           mkdir -p android-build-tools
           cd android-build-tools
 
@@ -41,17 +41,31 @@ jobs:
           curl -sSL -o bt.zip "$BUILD_TOOLS_URL"
           unzip -q bt.zip
           rm bt.zip
-          mv android-14 bt-r34
+          if [ -d android-14 ]; then
+            mv android-14 bt-r34
+          fi
           chmod +x bt-r34/aapt2 bt-r34/zipalign
 
           echo "下载 platform-34..."
           curl -sSL -o platform.zip "$PLATFORM_URL"
           unzip -q platform.zip
           rm platform.zip
-          mkdir -p android-34
-          mv android-14-ext7/android.jar android-34/ 2>/dev/null || \
-            mv android-*/android.jar android-34/
-          rm -rf android-14-ext7 android-14 android-13
+
+          echo "解压后的目录:"
+          ls -la
+
+          if [ ! -d android-34 ]; then
+            PLATFORM_DIR=$(find . -maxdepth 1 -type d -name "android-*" ! -name "android-build-tools" | head -n1)
+            if [ -n "$PLATFORM_DIR" ]; then
+              mv "$PLATFORM_DIR" android-34
+            fi
+          fi
+
+          if [ ! -f android-34/android.jar ]; then
+            echo "错误: 未找到 android-34/android.jar"
+            ls -la
+            exit 1
+          fi
 
           echo "创建签名密钥..."
           mkdir -p keys
