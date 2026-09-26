@@ -1,0 +1,82 @@
+name: 构建 Xposed 模块
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APK_NAME: 'leo_debugger'
+
+jobs:
+  build:
+    name: 构建并上传 APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: 配置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 设置 JAVA_HOME
+        run: echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+
+      - name: 检查构建工具
+        run: |
+          if [ ! -x "./android-build-tools/bt-r34/aapt2" ]; then
+            echo "错误: 未找到 ./android-build-tools/bt-r34/aapt2"
+            echo "请确认仓库中已包含 build-tools 和 platform-34"
+            ls -la ./android-build-tools/ || true
+            exit 1
+          fi
+          echo "构建工具已就绪"
+          ls -la ./android-build-tools/
+
+      - name: 赋予 build.sh 执行权限
+        run: chmod +x build.sh
+
+      - name: 运行 build.sh
+        run: bash build.sh
+
+      - name: 校验 APK
+        id: apk
+        run: |
+          if [ ! -f leo_debugger.apk ]; then
+            echo "未找到 leo_debugger.apk"
+            exit 1
+          fi
+          mkdir -p dist
+          cp leo_debugger.apk "dist/${{ env.APK_NAME }}.apk"
+          echo "name=${{ env.APK_NAME }}.apk" >> $GITHUB_OUTPUT
+          ls -lh dist/
+
+      - name: 上传 APK 构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}-apk
+          path: dist/*.apk
+          retention-days: 90
+
+      - name: 构建摘要
+        run: |
+          echo "## 构建成功" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 内容 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 提交 | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 分支 | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| APK | \`${{ steps.apk.outputs.name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 大小 | \`$(du -h dist/*.apk | cut -f1)\` |" >> $GITHUB_STEP_SUMMARY
