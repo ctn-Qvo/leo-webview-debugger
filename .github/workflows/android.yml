@@ -12,6 +12,9 @@ permissions:
 
 env:
   APK_NAME: 'leo_debugger'
+  BT_VERSION: '34.0.0'
+  BUILD_TOOLS_URL: 'https://dl.google.com/android/repository/build-tools_r34-linux.zip'
+  PLATFORM_URL: 'https://dl.google.com/android/repository/platform-34-ext7_r03.zip'
 
 jobs:
   build:
@@ -22,8 +25,6 @@ jobs:
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
-        with:
-          lfs: true
 
       - name: 配置 JDK 17
         uses: actions/setup-java@v4
@@ -31,19 +32,42 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 设置 JAVA_HOME
-        run: echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
-
-      - name: 检查构建工具
+      - name: 下载并准备构建工具
         run: |
-          if [ ! -x "./android-build-tools/bt-r34/aapt2" ]; then
-            echo "错误: 未找到 ./android-build-tools/bt-r34/aapt2"
-            echo "请确认仓库中已包含 build-tools 和 platform-34"
-            ls -la ./android-build-tools/ || true
-            exit 1
-          fi
-          echo "构建工具已就绪"
-          ls -la ./android-build-tools/
+          mkdir -p android-build-tools
+          cd android-build-tools
+
+          echo "下载 build-tools r34..."
+          curl -sSL -o bt.zip "$BUILD_TOOLS_URL"
+          unzip -q bt.zip
+          rm bt.zip
+          mv android-14 bt-r34
+          chmod +x bt-r34/aapt2 bt-r34/zipalign
+
+          echo "下载 platform-34..."
+          curl -sSL -o platform.zip "$PLATFORM_URL"
+          unzip -q platform.zip
+          rm platform.zip
+          mkdir -p android-34
+          mv android-14-ext7/android.jar android-34/ 2>/dev/null || \
+            mv android-*/android.jar android-34/
+          rm -rf android-14-ext7 android-14 android-13
+
+          echo "创建签名密钥..."
+          mkdir -p keys
+          "$JAVA_HOME/bin/keytool" -genkeypair -v \
+            -keystore keys/leo.keystore \
+            -storepass leo123456 \
+            -keypass leo123456 \
+            -alias leo \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=LeoDebugger, OU=Dev, O=Leo, L=CN, S=CN, C=CN" \
+            -storetype JKS 2>/dev/null || true
+
+          echo "构建工具已就绪:"
+          ls -la
+          ls -la bt-r34/ | head -20
+          ls -la android-34/
 
       - name: 赋予 build.sh 执行权限
         run: chmod +x build.sh
@@ -51,11 +75,12 @@ jobs:
       - name: 运行 build.sh
         run: bash build.sh
 
-      - name: 校验 APK
+      - name: 定位 APK
         id: apk
         run: |
           if [ ! -f leo_debugger.apk ]; then
             echo "未找到 leo_debugger.apk"
+            ls -la
             exit 1
           fi
           mkdir -p dist
